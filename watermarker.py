@@ -103,7 +103,7 @@ def main():
     Parses arguments.
     Usage example in Ubuntu:  python watermarker.py /home/user/Pictures \
     /home/user/Pictures/outputfolder/ -r 900 600 -t watermark -a 10 -o 0.8 \
-    -i /home/kvm/Pictures/wm/watermark.png
+    -i /home/user/Pictures/wm/watermark.png
     """
     parser = argparse.ArgumentParser(description='Images resizing and adding \
                                      a watermark.')
