@@ -1,4 +1,5 @@
-# This script allows resizing of pictures and making text and image watermarks.
+#!python 2.7.
+#This script allows resizing of pictures and making text and image watermarks.
 
 import argparse
 import ConfigParser
@@ -10,7 +11,6 @@ try:
 except ImportError:
     exit("This script requires the PIL module.\nInstall it please.")
 
-
 def resize_image(filename, width, height, outfolder):
     """
     Resizes the image to width x height resolution and saves the
@@ -20,22 +20,24 @@ def resize_image(filename, width, height, outfolder):
     :height: desired height of output image, an integer number
     :outfolder: path to the folder for the output image saving
     """
-    image = Image.open(filename)
+    image = Image.open(filename).convert('RGBA')
     imageWidth, imageHeight = image.size
 
-    if width is None and height is not None:
-        imageWidth = (imageWidth * height) / imageHeight
+    if width <= imageWidth and height <= imageHeight:
+        imageWidth = width
         imageHeight = height
-    elif width is not None and height is None:
+    elif width < imageWidth and height > imageHeight:
         imageHeight = (imageHeight * width) / imageWidth
         imageWidth = width
-    elif width is not None and height is not None:
-        imageWidth = width
+    elif width > imageWidth and height < imageHeight:
+        imageWidth = (imageWidth * height) / imageHeight
         imageHeight = height
 
+    layer = Image.new('RGBA', (width, height), (0,0,0,0))
     resizedImage = image.resize((int(imageWidth), int(imageHeight)))
-    resizedImage.save(os.path.join(outfolder, filename),'JPEG')
-
+    position = ((width - imageWidth)/2, (height - imageHeight)/2)
+    layer.paste(resizedImage, position)
+    layer.save(os.path.join(outfolder, filename))
 
 def text_watermark(filename, text, outfolder, angle=25, opacity=0.25):
     """
@@ -72,7 +74,6 @@ def text_watermark(filename, text, outfolder, angle=25, opacity=0.25):
     Image.composite(watermark, img, watermark).save(os.path.join(outfolder, \
                     filename), 'JPEG')
 
-
 def image_watermark(filename, watermark, outfolder, opacity=0.25):
     """
     Adds a watermark image to the input picture.
@@ -98,9 +99,8 @@ def image_watermark(filename, watermark, outfolder, opacity=0.25):
     layer.paste(watermark, position)
     Image.composite(layer, image, layer).save(os.path.join(outfolder, filename))
 
-
 def main():
-    """Parses arguments from <config.cdf> using ConfigParser."""
+    """Parses arguments from <config.cfg> using ConfigParser."""
     config = ConfigParser.ConfigParser()
     config.read("config.cfg")
     inputfolder = config.get('WATERMARKER', 'inputfolder')

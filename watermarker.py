@@ -9,7 +9,6 @@ try:
 except ImportError:
     exit("This script requires the PIL module.\nInstall it please.")
 
-
 def resize_image(filename, width, height, outfolder):
     """
     Resizes the image to width x height resolution and saves the
@@ -19,22 +18,23 @@ def resize_image(filename, width, height, outfolder):
     :height: desired height of output image, an integer number
     :outfolder: path to the folder for the output image saving
     """
-    image = Image.open(filename)
+    image = Image.open(filename).convert('RGBA')
     imageWidth, imageHeight = image.size
-
-    if width is None and height is not None:
-        imageWidth = (imageWidth * height) / imageHeight
+    if width <= imageWidth and height <= imageHeight:
+        imageWidth = width
         imageHeight = height
-    elif width is not None and height is None:
+    elif width < imageWidth and height > imageHeight:
         imageHeight = (imageHeight * width) / imageWidth
         imageWidth = width
-    elif width is not None and height is not None:
-        imageWidth = width
+    elif width > imageWidth and height < imageHeight:
+        imageWidth = (imageWidth * height) / imageHeight
         imageHeight = height
 
+    layer = Image.new('RGBA', (width, height), (0,0,0,0))
     resizedImage = image.resize((int(imageWidth), int(imageHeight)))
-    resizedImage.save(os.path.join(outfolder, filename),'JPEG')
-
+    position = ((width - imageWidth)/2, (height - imageHeight)/2)
+    layer.paste(resizedImage, position)
+    layer.save(os.path.join(outfolder, filename))
 
 def text_watermark(filename, text, outfolder, angle=25, opacity=0.25):
     """
@@ -46,7 +46,7 @@ def text_watermark(filename, text, outfolder, angle=25, opacity=0.25):
     :opacity: watermark opacity, a float number from 0 to 1
     """
     font = 'Verdana.ttf'
-    img = Image.open(filename).convert('RGB')
+    img = Image.open(filename).convert('RGBA')
     watermark = Image.new('RGBA', img.size, (0,0,0,0))
     size = 2
 
@@ -103,7 +103,7 @@ def main():
     Parses arguments.
     Usage example in Ubuntu:  python watermarker.py /home/user/Pictures \
     /home/user/Pictures/outputfolder/ -r 900 600 -t watermark -a 10 -o 0.8 \
-    -i /home/kvm/Pictures/wm/watermark.png
+    -i /home/user/Pictures/wm/watermark.png
     """
     parser = argparse.ArgumentParser(description='Images resizing and adding \
                                      a watermark.')
